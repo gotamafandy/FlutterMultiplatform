@@ -1,0 +1,9 @@
+name: common
+description: Shareable common code between platform.
+version: 0.0.1
+author: Fandy Gotama
+homepage:
+
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+
