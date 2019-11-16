@@ -1,4 +1,5 @@
 import 'package:common/domain/use_case.dart';
+import 'package:data/result.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:common/view/view_model.dart';
 
@@ -20,18 +21,16 @@ class ViewModelImpl<R, T>
   Observable<T> get result {
     return _startProperty.stream
         .doOnData((_) => _loadingProperty.sink.add(true))
-        .switchMap((request) {
-          return useCase.execute(request).asStream();
-        })
-        .doOnData((_) => _loadingProperty.sink.add(false))
+        .switchMap((request) => Observable.fromFuture(useCase.execute(request)))
+        .onErrorReturnWith((error) => Error(Exception(error)))
         .flatMap((response) {
-          return response.when((value) => Observable.just(value.value),
-              (error) {
-            _exceptionProperty.sink.add(error.error);
+      return response.when((success) => Observable.just(success.value),
+          (error) {
+        _exceptionProperty.sink.add(error.error);
 
-            return Observable.empty();
-          });
-        });
+        return Observable.empty();
+      });
+    }).doOnData((_) => _loadingProperty.sink.add(false));
   }
 
   final UseCase<R, T> useCase;

@@ -7,3 +7,8 @@ homepage:
 environment:
   sdk: ">=2.1.0 <3.0.0"
 
+dependencies:
+  rxdart: ^0.22.6
+  tuple: ^1.0.3
+  data:
+    path: ../data

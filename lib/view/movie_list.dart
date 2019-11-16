@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:common/view/view_model.dart';
+import 'package:common/view/view_model_list.dart';
+import 'package:flutter_clean_architecture/view/movie_cell.dart';
+import 'package:movie/model/movie.dart';
+import 'package:data/model.dart';
+import 'package:tuple/tuple.dart';
 
 class MovieList extends StatefulWidget {
-  final ViewModel<String, String> viewModel;
+  final ViewModelList<String, Movie> viewModel;
 
   const MovieList({Key key, this.viewModel}) : super(key: key);
 
@@ -11,6 +15,9 @@ class MovieList extends StatefulWidget {
 }
 
 class _MovieListState extends State<MovieList> {
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
+
   @override
   void dispose() {
     widget.viewModel.dispose();
@@ -22,26 +29,43 @@ class _MovieListState extends State<MovieList> {
   void initState() {
     super.initState();
 
-    widget.viewModel.inputs.start("");
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshIndicatorKey.currentState.show());
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: <Widget>[
-          StreamBuilder(stream: widget.viewModel.outputs.loading, builder: (context, AsyncSnapshot<bool> snapshot) {
+    return RefreshIndicator(
+      key: _refreshIndicatorKey,
+      onRefresh: _refresh,
+      child: StreamBuilder(
+          stream: widget.viewModel.outputs.result,
+          builder: (context, AsyncSnapshot<Tuple2<String, List<Movie>>> snapshot) {
             if (snapshot.data == null) return Container();
 
-            return Text(snapshot.data ? 'Loading' : 'Not Loading');
-          }),
-          StreamBuilder(stream: widget.viewModel.outputs.result, builder: (context, AsyncSnapshot<String> snapshot) {
-            if (snapshot.data == null) return Container();
+            final list = snapshot.data.item2;
 
-            return Text(snapshot.data);
+            return GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 5,
+                  mainAxisSpacing: 5,
+                  childAspectRatio: 0.7),
+              itemCount: list.length,
+              itemBuilder: (context, index) {
+                if (index == list.length - 2) {
+                  widget.viewModel.inputs.loadMore("avenger");
+                }
+
+                return MovieCell(movie: list[index]);
+              },
+            );
           }),
-        ],
-      ),
     );
+  }
+
+  Future<Null> _refresh() async {
+    widget.viewModel.inputs.start("avenger");
+
+    return null;
   }
 }

@@ -7,9 +7,9 @@ class Movie {
 
   factory Movie.fromJson(Map<String, dynamic> json) {
     return Movie(
-      title: json['title'],
-      year: json['year'],
-      poster: Uri.parse(json['poster'])
+      title: json['Title'],
+      year: json['Year'],
+      poster: Uri.parse(json['Poster'])
     );
   }
 }
