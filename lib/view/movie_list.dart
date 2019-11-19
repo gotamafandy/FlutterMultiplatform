@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:common/view/view_model_list.dart';
 import 'package:flutter_clean_architecture/view/movie_cell.dart';
 import 'package:movie/model/movie.dart';
-import 'package:data/model.dart';
 import 'package:tuple/tuple.dart';
 
 class MovieList extends StatefulWidget {

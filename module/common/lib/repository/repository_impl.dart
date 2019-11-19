@@ -10,6 +10,8 @@ class RepositoryImpl<R, T> implements Repository<R, T> {
 
   @override
   Future<Result<T>> get(R request, bool forceCacheLoad) async {
+    print("TESET REPOSITORY GET");
+
     return await service.execute(request);
   }
 }

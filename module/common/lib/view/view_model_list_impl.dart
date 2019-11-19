@@ -1,5 +1,4 @@
 import 'package:common/domain/use_case.dart';
-import 'package:data/result.dart';
 import 'package:data/model.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:common/view/view_model_list.dart';
@@ -23,17 +22,7 @@ class ViewModelListImpl<R, T extends DataList, E>
   Observable<Exception> get exception => _exceptionProperty.stream;
 
   @override
-  Observable<Tuple2<R, List<E>>> result;
-
-  final UseCase<R, T> useCase;
-  final bool showCacheDuringInitialLoad;
-
-  final _startProperty = BehaviorSubject<R>();
-  final _loadMoreProperty = BehaviorSubject<R>();
-  final _loadingProperty = BehaviorSubject<bool>();
-  final _exceptionProperty = BehaviorSubject<Exception>();
-
-  ViewModelListImpl({this.useCase, this.showCacheDuringInitialLoad}) {
+  Observable<Tuple2<R, List<E>>> get result {
     final items = List<E>();
     bool clearItems = false;
 
@@ -42,12 +31,12 @@ class ViewModelListImpl<R, T extends DataList, E>
     if (showCacheDuringInitialLoad) {
       cacheRequest = _startProperty.stream
           .switchMap((request) => Observable.fromFuture(
-                  useCase.execute(request, forceCacheLoad: true))
-              .map((response) => Tuple2(request, response)))
+          useCase.execute(request, forceCacheLoad: true))
+          .map((response) => Tuple2(request, response)))
           .flatMap((response) {
         return response.item2.when(
-            (success) => Observable.just(Tuple2(response.item1, success.value)),
-            (error) => Observable.empty());
+                (success) => Observable.just(Tuple2(response.item1, success.value)),
+                (error) => Observable.empty());
       });
     } else {
       cacheRequest = null;
@@ -56,11 +45,11 @@ class ViewModelListImpl<R, T extends DataList, E>
     final initialRequest = _startProperty.stream
         .doOnData((_) => _loadingProperty.sink.add(true))
         .switchMap((request) => Observable.fromFuture(useCase.execute(request))
-            .map((response) => Tuple2(request, response)))
+        .map((response) => Tuple2(request, response)))
         .flatMap((response) {
       return response.item2.when(
-          (success) => Observable.just(Tuple2(response.item1, success.value)),
-          (error) => Observable.empty());
+              (success) => Observable.just(Tuple2(response.item1, success.value)),
+              (error) => Observable.empty());
     }).doOnData((_) {
       _loadingProperty.sink.add(false);
       clearItems = true;
@@ -69,11 +58,11 @@ class ViewModelListImpl<R, T extends DataList, E>
     final nextRequest = _loadMoreProperty.stream
         .doOnData((_) => _loadingProperty.sink.add(true))
         .switchMap((request) => Observable.fromFuture(useCase.execute(request))
-            .map((response) => Tuple2(request, response)))
+        .map((response) => Tuple2(request, response)))
         .flatMap((response) {
       return response.item2.when(
-          (success) => Observable.just(Tuple2(response.item1, success.value)),
-          (error) => Observable.empty());
+              (success) => Observable.just(Tuple2(response.item1, success.value)),
+              (error) => Observable.empty());
     }).doOnData((_) {
       _loadingProperty.sink.add(false);
       clearItems = false;
@@ -92,16 +81,26 @@ class ViewModelListImpl<R, T extends DataList, E>
     }
 
     if (cacheRequest != null) {
-      result = Observable.merge([cacheRequest, initialRequest, nextRequest])
+      return Observable.merge([cacheRequest, initialRequest, nextRequest])
           .map((response) {
         return getItems(response);
       });
     } else {
-      result = Observable.merge([initialRequest, nextRequest]).map((response) {
+      return Observable.merge([initialRequest, nextRequest]).map((response) {
         return getItems(response);
       });
     }
   }
+
+  final UseCase<R, T> useCase;
+  final bool showCacheDuringInitialLoad;
+
+  final _startProperty = BehaviorSubject<R>();
+  final _loadMoreProperty = BehaviorSubject<R>();
+  final _loadingProperty = BehaviorSubject<bool>();
+  final _exceptionProperty = BehaviorSubject<Exception>();
+
+  ViewModelListImpl({this.useCase, this.showCacheDuringInitialLoad});
 
   @override
   void start(R request) {
@@ -115,6 +114,7 @@ class ViewModelListImpl<R, T extends DataList, E>
 
   @override
   void dispose() {
+    _loadMoreProperty.close();
     _loadingProperty.close();
     _startProperty.close();
     _exceptionProperty.close();

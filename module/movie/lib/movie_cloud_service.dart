@@ -2,7 +2,6 @@ import 'package:data/service.dart';
 import 'package:data/result.dart';
 import 'package:data/mapper.dart';
 import 'package:http/http.dart';
-import 'dart:isolate';
 
 class MovieCloudService<T> implements Service<String, T> {
   final String key;
@@ -18,7 +17,7 @@ class MovieCloudService<T> implements Service<String, T> {
     final uri = Uri.https(host, '', queries);
 
     final response = await client.get(uri);
-    
+
     if (response.statusCode == 200) {
       return Success(mapper.transform(response.body));
     } else {
